@@ -20,20 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-extern crate md5;
-extern crate curl;
-extern crate bzip2;
-extern crate tar;
-
-use curl::easy::Easy;
 use bzip2::read::BzDecoder;
+use curl::easy::Easy;
 use tar::Archive;
 
 use std::env::var;
-use std::path::*;
 use std::fs::{self, File};
 use std::io::*;
-
+use std::path::*;
 
 // Use `conda search --json --platform 'win-64' mkl-static`
 // to query the metadata of conda package (includes MD5 sum).
@@ -42,37 +36,36 @@ use std::io::*;
 mod mkl {
     pub const LIB_PATH: &'static str = "lib";
 
-    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
-        ("mkl-static-2019.1-intel_144.tar.bz2", 
-         "https://conda.anaconda.org/intel/linux-64/mkl-static-2019.1-intel_144.tar.bz2",
-         "37e3a60ff2643cf40b5cf9d2c183588c")
-    ];
+    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[(
+        "mkl-static-2020.4-intel_304.tar.bz2",
+        "https://conda.anaconda.org/intel/linux-64/mkl-static-2020.4-intel_304.tar.bz2",
+        "9f589a1508fb083c3e73427db459ca4c",
+    )];
 }
 
 #[cfg(target_os = "macos")]
 mod mkl {
     pub const LIB_PATH: &'static str = "lib";
 
-    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
-        ("mkl-static-2019.1-intel_144.tar.bz2", 
-         "https://conda.anaconda.org/intel/osx-64/mkl-static-2019.1-intel_144.tar.bz2", 
-         "74a186a5e325146c7de7e1e1c8fc3bc3")
-    ];
+    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[(
+        "mkl-static-2020.4-intel_301.tar.bz2",
+        "https://conda.anaconda.org/intel/osx-64/mkl-static-2020.4-intel_301.tar.bz2",
+        "2f9e1b8b6d6b0903e81a573084e4494f",
+    )];
 }
 
 #[cfg(target_os = "windows")]
 mod mkl {
     pub const LIB_PATH: &'static str = "Library\\lib";
 
-    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
-        ("mkl-static-2019.1-intel_144.tar.bz2", 
-         "https://conda.anaconda.org/intel/win-64/mkl-static-2019.1-intel_144.tar.bz2", 
-         "0b65a55b6bcda83392e9defff8e1edbe")
-    ];
+    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[(
+        "mkl-static-2020.4-intel_311.tar.bz2",
+        "https://conda.anaconda.org/intel/win-64/mkl-static-2020.4-intel_311.tar.bz2",
+        "5ae780c06edd0be62966c6d8ab47d5fb",
+    )];
 }
 
 fn download(uri: &str, filename: &str, out_dir: &Path) {
-
     let out = PathBuf::from(out_dir.join(filename));
 
     // Download the tarball.
@@ -82,9 +75,8 @@ fn download(uri: &str, filename: &str, out_dir: &Path) {
     easy.follow_location(true).unwrap();
     easy.autoreferer(true).unwrap();
     easy.url(&uri).unwrap();
-    easy.write_function(move |data| {
-        Ok(writer.write(data).unwrap())
-    }).unwrap();
+    easy.write_function(move |data| Ok(writer.write(data).unwrap()))
+        .unwrap();
     easy.perform().unwrap();
 
     let response_code = easy.response_code().unwrap();
@@ -120,7 +112,7 @@ fn main() {
             println!("Download archive");
             download(uri, archive, &out_dir);
             extract(&archive_path, &out_dir);
-            
+
             let sum = calc_md5(&archive_path);
             if sum != *md5 {
                 panic!(
@@ -130,8 +122,11 @@ fn main() {
             }
         }
     }
-    
-    println!("cargo:rustc-link-search={}", out_dir.join(mkl::LIB_PATH).display());
+
+    println!(
+        "cargo:rustc-link-search={}",
+        out_dir.join(mkl::LIB_PATH).display()
+    );
 
     // mkl_intel_ilp64 links to a version w/ 64-bit ints,
     // mkl_intel_lp64 links to a version w/ 32-bit ints.

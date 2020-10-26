@@ -1,6 +1,4 @@
 # intel-mkl-src
-[![Crate](http://meritbadge.herokuapp.com/intel-mkl-src)](https://crates.io/crates/intel-mkl-src)
-[![Build Status](https://travis-ci.org/termoshtt/rust-intel-mkl.svg?branch=master)](https://travis-ci.org/termoshtt/rust-intel-mkl)
 
 Redistribution of Intel MKL as a crate. Tested on Linux and macOS.
 
